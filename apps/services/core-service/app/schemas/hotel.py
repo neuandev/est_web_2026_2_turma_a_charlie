@@ -1,41 +1,22 @@
 import uuid
-from typing import List
 
-from sqlalchemy import ForeignKey, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from pydantic import BaseModel, ConfigDict, Field
 
-# A MESMA Base do restante do projeto. Nao crie outra: uma segunda Base
-# significa um segundo registro de metadados, e o Alembic nao enxergaria
-# estas tabelas -- em silencio, sem erro.
-from app.models.tutorial import Base
+from app.schemas.cidade import CidadePublic
 
 
-class Cidade(Base):
-    __tablename__ = "cidades"
+class HotelCreateSchema(BaseModel):
+    """Dados recebidos para criar um hotel."""
 
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    # unique=True: sem estado/UF no modelo, duas linhas "Fortaleza" seriam
-    # indistinguiveis para quem for pendurar um hotel (decisao 5.3 da issue #7).
-    nome: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
-
-    # Lado 1 da relacao: uma cidade tem VARIOS hoteis.
-    # Nao vira coluna nenhuma no banco -- e navegacao em Python.
-    hoteis: Mapped[List["Hotel"]] = relationship(
-        back_populates="cidade", cascade="all, delete-orphan"
-    )
+    nome: str = Field(min_length=1, max_length=100)
+    cidade_id: uuid.UUID
 
 
-class Hotel(Base):
-    __tablename__ = "hoteis"
+class HotelResponseSchema(BaseModel):
+    """Dados devolvidos pela API."""
 
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    # Sem unique: "Hotel Central" pode existir em Fortaleza e em Sobral.
-    nome: Mapped[str] = mapped_column(String(100), nullable=False)
+    model_config = ConfigDict(from_attributes=True)
 
-    # Lado N da relacao: a FK mora AQUI (decisao 3 da issue #7).
-    cidade_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("cidades.id", ondelete="CASCADE"), nullable=False
-    )
-
-    # Lado N da navegacao: um hotel aponta para UMA cidade.
-    cidade: Mapped["Cidade"] = relationship(back_populates="hoteis")
+    id: uuid.UUID
+    nome: str
+    cidade: CidadePublic
