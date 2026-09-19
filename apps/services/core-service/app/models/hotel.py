@@ -1,12 +1,9 @@
 import uuid
 from typing import List
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import JSON, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-# A MESMA Base do restante do projeto. Nao crie outra: uma segunda Base
-# significa um segundo registro de metadados, e o Alembic nao enxergaria
-# estas tabelas -- em silencio, sem erro.
 from app.models.tutorial import Base
 
 
@@ -23,6 +20,16 @@ class Cidade(Base):
         unique=True,
         nullable=False,
     )
+
+    estado: Mapped[str] = mapped_column(
+        String(2),
+        nullable=False,
+    )
+
+    limite_territorial: Mapped[dict | None] = mapped_column(
+        JSON,
+        nullable=True,
+)
 
     hoteis: Mapped[List["Hotel"]] = relationship(
         back_populates="cidade",
@@ -45,6 +52,10 @@ class Hotel(Base):
 
     cidade_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("cidades.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    categoria_estrelas: Mapped[int] = mapped_column(
         nullable=False,
     )
 
