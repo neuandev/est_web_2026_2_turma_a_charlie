@@ -4,13 +4,16 @@ from app.repositories.hotel_repository import CidadeRepository, HotelRepository
 
 
 class CidadeService:
-    """Regras de negócio de Cidade."""
+    """Regras de negocio de Cidade."""
 
     def __init__(self, db: Session):
         self.repository = CidadeRepository(db)
 
     def create(self, payload):
-        return self.repository.create(nome=payload.nome)
+        return self.repository.create(
+            nome=payload.nome,
+            estado=payload.estado,
+        )
 
     def list(self):
         return self.repository.list()
@@ -23,7 +26,7 @@ class CidadeService:
 
 
 class HotelService:
-    """Regras de negócio de Hotel."""
+    """Regras de negocio de Hotel."""
 
     def __init__(self, db: Session):
         self.repository = HotelRepository(db)
