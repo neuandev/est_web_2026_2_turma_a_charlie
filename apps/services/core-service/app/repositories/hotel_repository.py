@@ -34,17 +34,25 @@ class HotelRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def create(self, nome: str, cidade_id) -> Hotel:
-        hotel = Hotel(nome=nome, cidade_id=cidade_id)
-        self.db.add(hotel)
-        self.db.commit()
-        self.db.refresh(hotel)
-        return hotel
+    def create(
+        self,
+        nome: str,
+        cidade_id,
+        categoria_estrelas: int,
+    ) -> Hotel:
+        hotel = Hotel(
+            nome=nome,
+            cidade_id=cidade_id,
+            categoria_estrelas=categoria_estrelas,
+            )
 
     def list(self) -> List[Hotel]:
         return (
             self.db.query(Hotel)
-            .options(joinedload(Hotel.cidade))
+            .options(
+                joinedload(Hotel.cidade),
+                joinedload(Hotel.quartos),
+            )
             .order_by(Hotel.nome)
             .all()
         )
@@ -52,7 +60,10 @@ class HotelRepository:
     def list_by_cidade(self, cidade_id) -> List[Hotel]:
         return (
             self.db.query(Hotel)
-            .options(joinedload(Hotel.cidade))
+            .options(
+                joinedload(Hotel.cidade),
+                joinedload(Hotel.quartos),
+            )
             .filter(Hotel.cidade_id == cidade_id)
             .order_by(Hotel.nome)
             .all()
@@ -61,7 +72,10 @@ class HotelRepository:
     def get_by_id(self, hotel_id) -> Hotel | None:
         return (
             self.db.query(Hotel)
-            .options(joinedload(Hotel.cidade))
+             .options(
+                joinedload(Hotel.cidade),
+                joinedload(Hotel.quartos),
+            )
             .filter(Hotel.id == hotel_id)
             .first()
         )
