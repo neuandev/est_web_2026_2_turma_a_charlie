@@ -11,8 +11,11 @@ class CidadeRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def create(self, nome: str) -> Cidade:
-        cidade = Cidade(nome=nome)
+    def create(self, nome: str, estado: str) -> Cidade:
+        cidade = Cidade(
+            nome=nome,
+            estado=estado,
+     )
         self.db.add(cidade)
         self.db.commit()
         self.db.refresh(cidade)

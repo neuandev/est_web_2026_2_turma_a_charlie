@@ -10,7 +10,10 @@ class CidadeService:
         self.repository = CidadeRepository(db)
 
     def create(self, payload):
-        return self.repository.create(nome=payload.nome)
+        return self.repository.create(
+            nome=payload.nome,
+            estado=payload.estado,
+        )
 
     def list(self):
         return self.repository.list()
