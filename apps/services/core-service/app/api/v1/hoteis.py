@@ -3,7 +3,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.core.database import get_db
+from app.core.database import get_db, get_mongo_db
 from app.schemas.cidade import CidadeCreate, CidadePublic
 from app.schemas.hotel import HotelCreateSchema, HotelResponseSchema
 from app.services.hotel_service import CidadeService, HotelService
@@ -49,11 +49,12 @@ def listar_cidades(
     response_model=HotelResponseSchema,
     status_code=201,
 )
-def criar_hotel(
+async def criar_hotel(
     payload: HotelCreateSchema,
     db: Session = Depends(get_db),
+    mongo_db=Depends(get_mongo_db),
 ):
-    service = HotelService(db)
+    service = HotelService(db, mongo_db)
 
     cidade = CidadeService(db).get_by_id(payload.cidade_id)
 
@@ -63,7 +64,7 @@ def criar_hotel(
             detail="Cidade nao encontrada.",
         )
 
-    return service.create(payload)
+    return await service.create(payload)
 
 
 @router.get(
@@ -72,8 +73,9 @@ def criar_hotel(
 )
 def listar_hoteis(
     db: Session = Depends(get_db),
+    mongo_db=Depends(get_mongo_db),
 ):
-    service = HotelService(db)
+    service = HotelService(db, mongo_db)
     return service.list()
 
 
@@ -84,8 +86,9 @@ def listar_hoteis(
 def buscar_hotel(
     hotel_id: uuid.UUID,
     db: Session = Depends(get_db),
+    mongo_db=Depends(get_mongo_db),
 ):
-    service = HotelService(db)
+    service = HotelService(db, mongo_db)
 
     hotel = service.get_by_id(hotel_id)
 
@@ -105,6 +108,7 @@ def buscar_hotel(
 def listar_hoteis_por_cidade(
     cidade_id: uuid.UUID,
     db: Session = Depends(get_db),
+    mongo_db=Depends(get_mongo_db),
 ):
     cidade_service = CidadeService(db)
 
@@ -116,6 +120,6 @@ def listar_hoteis_por_cidade(
             detail="Cidade nao encontrada.",
         )
 
-    hotel_service = HotelService(db)
+    hotel_service = HotelService(db, mongo_db)
 
     return hotel_service.list_by_cidade(cidade_id)

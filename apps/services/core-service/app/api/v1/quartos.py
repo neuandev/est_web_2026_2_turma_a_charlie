@@ -1,16 +1,17 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
+from motor.motor_asyncio import AsyncIOMotorDatabase
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_admin
-from app.core.database import get_db
-from app.services.quarto_service import QuartoService
+from app.core.database import get_db, get_mongo_db
 from app.schemas.quarto import (
     QuartoCreateSchema,
     QuartoResponseSchema,
     QuartoUpdateSchema,
 )
+from app.services.quarto_service import QuartoService
 
 router = APIRouter()
 
@@ -20,15 +21,16 @@ router = APIRouter()
     response_model=QuartoResponseSchema,
     status_code=201,
 )
-def criar_quarto(
+async def criar_quarto(
     payload: QuartoCreateSchema,
     db: Session = Depends(get_db),
+    mongo_db: AsyncIOMotorDatabase = Depends(get_mongo_db),
     admin: dict = Depends(get_current_admin),
 ):
-    service = QuartoService(db)
+    service = QuartoService(db, mongo_db)
 
     try:
-        return service.create(payload)
+        return await service.create(payload)
     except Exception as exc:
         raise HTTPException(
             status_code=400,
@@ -41,7 +43,7 @@ def criar_quarto(
     response_model=list[QuartoResponseSchema],
 )
 def listar_quartos(db: Session = Depends(get_db)):
-    service = QuartoService(db)
+    service = QuartoService(db, get_mongo_db())
     return service.list()
 
 
@@ -53,7 +55,7 @@ def buscar_quarto(
     quarto_id: uuid.UUID,
     db: Session = Depends(get_db),
 ):
-    service = QuartoService(db)
+    service = QuartoService(db, get_mongo_db())
     quarto = service.get_by_id(quarto_id)
 
     if not quarto:
@@ -69,14 +71,15 @@ def buscar_quarto(
     "/quartos/{quarto_id}",
     response_model=QuartoResponseSchema,
 )
-def atualizar_quarto(
+async def atualizar_quarto(
     quarto_id: uuid.UUID,
     payload: QuartoUpdateSchema,
     db: Session = Depends(get_db),
+    mongo_db: AsyncIOMotorDatabase = Depends(get_mongo_db),
     admin: dict = Depends(get_current_admin),
 ):
-    service = QuartoService(db)
-    quarto = service.update(quarto_id, payload)
+    service = QuartoService(db, mongo_db)
+    quarto = await service.update(quarto_id, payload)
 
     if not quarto:
         raise HTTPException(
@@ -91,13 +94,14 @@ def atualizar_quarto(
     "/quartos/{quarto_id}",
     status_code=204,
 )
-def deletar_quarto(
+async def deletar_quarto(
     quarto_id: uuid.UUID,
     db: Session = Depends(get_db),
+    mongo_db: AsyncIOMotorDatabase = Depends(get_mongo_db),
     admin: dict = Depends(get_current_admin),
 ):
-    service = QuartoService(db)
-    quarto = service.delete(quarto_id)
+    service = QuartoService(db, mongo_db)
+    quarto = await service.delete(quarto_id)
 
     if not quarto:
         raise HTTPException(

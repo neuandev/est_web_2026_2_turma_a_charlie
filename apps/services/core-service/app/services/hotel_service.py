@@ -1,6 +1,8 @@
+from motor.motor_asyncio import AsyncIOMotorDatabase
 from sqlalchemy.orm import Session
 
 from app.repositories.hotel_repository import CidadeRepository, HotelRepository
+from app.services.catalogo_sync_service import CatalogoSyncService
 
 
 class CidadeService:
@@ -28,15 +30,24 @@ class CidadeService:
 class HotelService:
     """Regras de negocio de Hotel."""
 
-    def __init__(self, db: Session):
+    def __init__(
+        self,
+        db: Session,
+        mongo_db: AsyncIOMotorDatabase,
+    ):
         self.repository = HotelRepository(db)
+        self.catalogo_sync = CatalogoSyncService(db, mongo_db)
 
-    def create(self, payload):
-        return self.repository.create(
+    async def create(self, payload):
+        hotel = self.repository.create(
             nome=payload.nome,
             cidade_id=payload.cidade_id,
             categoria_estrelas=payload.categoria_estrelas,
         )
+
+        await self.catalogo_sync.sincronizar_hotel(hotel.id)
+
+        return hotel
 
     def list(self):
         return self.repository.list()
