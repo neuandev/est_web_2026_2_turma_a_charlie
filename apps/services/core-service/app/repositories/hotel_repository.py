@@ -15,7 +15,7 @@ class CidadeRepository:
         cidade = Cidade(
             nome=nome,
             estado=estado,
-     )
+        )
         self.db.add(cidade)
         self.db.commit()
         self.db.refresh(cidade)
@@ -47,7 +47,13 @@ class HotelRepository:
             nome=nome,
             cidade_id=cidade_id,
             categoria_estrelas=categoria_estrelas,
-            )
+        )
+
+        self.db.add(hotel)
+        self.db.commit()
+        self.db.refresh(hotel)
+
+        return hotel
 
     def list(self) -> List[Hotel]:
         return (
@@ -75,7 +81,7 @@ class HotelRepository:
     def get_by_id(self, hotel_id) -> Hotel | None:
         return (
             self.db.query(Hotel)
-             .options(
+            .options(
                 joinedload(Hotel.cidade),
                 joinedload(Hotel.quartos),
             )
