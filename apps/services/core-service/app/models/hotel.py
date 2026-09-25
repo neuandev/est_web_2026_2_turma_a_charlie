@@ -1,12 +1,16 @@
+from __future__ import annotations
+
 import uuid
 from decimal import Decimal
-from typing import List
+from typing import TYPE_CHECKING, List
 
 from sqlalchemy import JSON, ForeignKey, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.tutorial import Base
+from app.models.tutorial import Base, hotel_comodidade
 
+if TYPE_CHECKING:
+    from app.models.comodidade import Comodidade
 
 class Cidade(Base):
     __tablename__ = "cidades"
@@ -67,6 +71,11 @@ class Hotel(Base):
     quartos: Mapped[List["Quarto"]] = relationship(
         back_populates="hotel",
         cascade="all, delete-orphan",
+    )
+
+    comodidades: Mapped[List["Comodidade"]] = relationship(
+        secondary=hotel_comodidade,
+        back_populates="hoteis",
     )
 
 
