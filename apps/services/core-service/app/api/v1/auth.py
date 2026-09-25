@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 
 from app.api.deps import (
     autenticar_credenciais,
@@ -7,13 +8,44 @@ from app.api.deps import (
     get_current_user,
 )
 from app.core.database import get_db
-from app.core.security import criar_access_token
+from app.core.security import criar_access_token, hash_senha
 from app.models.usuario import Usuario
-from app.schemas.usuario import LoginRequest, Token, UsuarioPublic
+from app.schemas.usuario import LoginRequest, Token, UsuarioCreate, UsuarioPublic
+
+
 
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
+@router.post("/register", response_model=UsuarioPublic, status_code=status.HTTP_201_CREATED)
+def register(
+    payload: UsuarioCreate,
+    db: Session = Depends(get_db),
+):
+    """Cadastra um novo usuário."""
+
+    usuario_existente = db.execute(
+        select(Usuario).where(Usuario.email == payload.email)
+    ).scalar_one_or_none()
+
+    if usuario_existente is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="E-mail já cadastrado",
+        )
+
+    novo_usuario = Usuario(
+        nome=payload.nome,
+        email=payload.email,
+        senha_hash=hash_senha(payload.senha),
+        is_admin=payload.is_admin,
+    )
+
+    db.add(novo_usuario)
+    db.commit()
+    db.refresh(novo_usuario)
+
+    return novo_usuario
 
 @router.post("/login", response_model=Token)
 def login(
