@@ -39,10 +39,25 @@ class HotelService:
         self.catalogo_sync = CatalogoSyncService(db, mongo_db)
 
     async def create(self, payload):
+        comodidades = self.repository.get_comodidades_by_ids(
+            payload.comodidade_ids
+        )
+
+        ids_encontradas = {comodidade.id for comodidade in comodidades}
+        ids_recebidas = set(payload.comodidade_ids)
+
+        ids_invalidas = ids_recebidas - ids_encontradas
+
+        if ids_invalidas:
+            raise ValueError(
+                f"Comodidades não encontradas: {sorted(ids_invalidas)}"
+            )
+
         hotel = self.repository.create(
             nome=payload.nome,
             cidade_id=payload.cidade_id,
             categoria_estrelas=payload.categoria_estrelas,
+            comodidades=comodidades,
         )
 
         await self.catalogo_sync.sincronizar_hotel(hotel.id)

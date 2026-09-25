@@ -11,6 +11,7 @@ from app.models import hotel  # noqa: F401
 from app.models import usuario  # noqa: F401
 from app.models import servico_adicional  # noqa: F401
 from app.models import tarifa_temporada  # noqa: F401
+from app.models import comodidade  # noqa: F401
 
 # Objeto de configuração do Alembic
 config = context.config
