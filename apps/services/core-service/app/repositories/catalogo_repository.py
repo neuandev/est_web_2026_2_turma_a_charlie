@@ -21,6 +21,13 @@ class CatalogoRepository:
         )
         return await cursor.to_list(length=None)
 
+    async def buscar(self, filtros: dict) -> list[dict]:
+        cursor = self.collection.find(
+            filtros,
+            {"_id": 0},
+        )
+        return await cursor.to_list(length=None)
+
     async def buscar_por_cidade(self, cidade_id: str) -> list[dict]:
         cursor = self.collection.find(
             {"cidade_id": cidade_id},
